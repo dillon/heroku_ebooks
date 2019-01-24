@@ -76,6 +76,7 @@ To use tweets from a Twitter account you have access to, you can download your T
 5. Once that is all set, run `twittereater.py` and it will automatically create a corpus file based on the `TEST_SOURCE` variable in `local_settings.py`
 
 If you want to use the Twitter corpus to generate tweets, set `STATIC_TEST = True`
+> Tweets should be entered one on each line, no quotation marks needed
 
 
 ## Debugging

@@ -52,10 +52,10 @@ def entity(text):
 
 def filter_status(text):
     text = re.sub(r'\b(RT|MT) .+', '', text)  # take out anything after RT or MT
-    text = re.sub(r'(\#|@|(h\/t)|(http))\S+', '', text)  # Take out URLs, hashtags, hts, etc.
+    text = re.sub(r'(\#|(h\/t)|(http))\S+', '', text)  # Take out URLs, hashtags, hts, etc.
     text = re.sub('\s+', ' ', text)  # collaspse consecutive whitespace to single spaces.
-    text = re.sub(r'\"|\(|\)', '', text)  # take out quotes.
-    text = re.sub(r'\s+\(?(via|says)\s@\w+\)?', '', text)  # remove attribution
+    text = re.sub(r'\“\”\"|\!\?\"\“\”\‘\’\']\(|\)', '', text)  # take out quotes.
+    # text = re.sub(r'\s+\(?(via|says)\s@\w+\)?', '', text)  # remove attribution
     text = re.sub(r'<[^>]*>','', text) #strip out html tags from mastodon posts
     htmlsents = re.findall(r'&\w+;', text)
     for item in htmlsents:
@@ -133,6 +133,7 @@ def grab_toots(api, account_id=None,max_id=None):
 
 if __name__ == "__main__":
     order = ORDER
+    end_with_periods = TWEETS_END_WITH_PERIODS
     guess = 0
     if ODDS and not DEBUG:
         guess = random.randint(0, ODDS - 1)
@@ -146,9 +147,13 @@ if __name__ == "__main__":
         if STATIC_TEST:
             file = TEST_SOURCE
             print(">>> Generating from {0}".format(file))
-            string_list = open(file).readlines()
-            for item in string_list:
-                source_statuses += item.split(",")
+            source_statuses = [filter_status(line.rstrip('\n')) for line in open(file)]
+            for status in source_statuses:
+                if not re.search('([\.\!\?\"\“\”\‘\’\']$)', status):
+                    status += "."
+            # string_list = open(file).readline()
+            # for item in string_list:
+                # source_statuses += item.split("")
         if SCRAPE_URL:
             source_statuses += scrape_page(SRC_URL, WEB_CONTEXT, WEB_ATTRIBUTES)
         if ENABLE_TWITTER_SOURCES and TWITTER_SOURCE_ACCOUNTS and len(TWITTER_SOURCE_ACCOUNTS[0]) > 0:
@@ -196,8 +201,8 @@ if __name__ == "__main__":
             sys.exit()
         mine = markov.MarkovChainer(order)
         for status in source_statuses:
-            if not re.search('([\.\!\?\"\']$)', status):
-                status += "."
+            # if not re.search('([\.\!\?\"\']$)', status):
+            #     status += "."
             mine.add_text(status)
         for x in range(0, 10):
             ebook_status = mine.generate_sentence()
@@ -226,11 +231,19 @@ if __name__ == "__main__":
         # throw out tweets that match anything from the source account.
         if ebook_status is not None and len(ebook_status) < 210:
             for status in source_statuses:
-                if ebook_status[:-1] not in status:
+                stripped_status = status.strip()
+                stripped_ebook_status = ebook_status[:-1].strip()
+                stripped_status = stripped_status.lower()
+                stripped_ebook_status = stripped_ebook_status.lower()
+                if ebook_status[:-1] not in status and ebook_status[:-1] != status and stripped_ebook_status != stripped_status:
                     continue
                 else:
                     print("TOO SIMILAR: " + ebook_status)
                     sys.exit()
+
+            # should the tweet end in a period?
+            if end_with_periods == False and ebook_status[-1] == ".":
+                ebook_status = ebook_status[:-1]
 
             if not DEBUG:
                 if ENABLE_TWITTER_POSTING:

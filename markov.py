@@ -62,10 +62,11 @@ class MarkovChainer(object):
                 except Exception:
                     nw = False
             new_res = res[0:-2]
-            if new_res[0].istitle() or new_res[0].isupper():
-                pass
-            else:
-                new_res[0] = new_res[0].capitalize()
+            # don't capitalize
+            # if new_res[0].istitle() or new_res[0].isupper():
+            #     pass
+            # else:
+            #     new_res[0] = new_res[0].capitalize()
             sentence = ""
             for word in new_res:
                 sentence += word + " "
